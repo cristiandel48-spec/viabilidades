@@ -1,0 +1,344 @@
+{% extends "base.html" %}
+{% block title %}{{ v.referencia }} — M&D Viabilidad{% endblock %}
+
+{% macro fmt(val) %}{% if val %}${{ '{:,.0f}'.format(val)|replace(',','.') }}{% else %}—{% endif %}{% endmacro %}
+{% macro pct(val) %}{% if val is not none %}{{ '%.1f'|format(val) }}%{% else %}—{% endif %}{% endmacro %}
+
+{% block content %}
+
+<!-- Phase bar -->
+<div class="phase-bar">
+  <a class="ph {{ 'active' if v.fase == 1 else 'done' }}" href="#fase1">
+    <div class="ph-n">{% if v.fase > 1 %}✓{% else %}1{% endif %}</div>
+    <span class="ph-l">Viabilidad inicial</span>
+  </a>
+  <span class="ph-sep">›</span>
+  <a class="ph {{ 'active' if v.fase == 2 else ('done' if v.fase > 2 else 'locked') }}" href="#fase2">
+    <div class="ph-n">{% if v.fase > 2 %}✓{% else %}2{% endif %}</div>
+    <span class="ph-l">Corrido de materiales</span>
+  </a>
+  <span class="ph-sep">›</span>
+  <a class="ph {{ 'active' if v.fase == 3 else 'locked' }}" href="#fase3">
+    <div class="ph-n">3</div>
+    <span class="ph-l">Asignación final</span>
+  </a>
+</div>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start">
+    <div>
+      <h1 class="page-title">{{ v.referencia or 'Sin referencia' }} {% if v.nombre %}— {{ v.nombre }}{% endif %}</h1>
+      <p class="page-sub">
+        Ref. madre: {{ v.ref_madre or '—' }} &nbsp;·&nbsp;
+        Unidades: {{ v.unidades or '—' }} &nbsp;·&nbsp;
+        Creada por: {{ v.creado_por or '—' }} &nbsp;·&nbsp;
+        {% if v.cerrada %}<span class="status s-closed">Cerrada</span>
+        {% elif v.fase == 3 %}<span class="status s-f2">Fase 3 — Asignación</span>
+        {% elif v.fase == 2 %}<span class="status s-f1">Fase 2 — Materiales</span>
+        {% else %}<span class="status s-open">Fase 1 — Inicial</span>{% endif %}
+      </p>
+    </div>
+    <a href="{{ url_for('main.dashboard') }}" class="btn-s btn-sm">← Volver</a>
+  </div>
+
+  <!-- ══════════════════════
+       FASE 1
+  ══════════════════════ -->
+  <div id="fase1">
+
+    <!-- Editar Fase 1 -->
+    {% if not v.cerrada %}
+    <form method="POST" action="{{ url_for('main.guardar', vid=vid) }}">
+      <input type="hidden" name="fase" value="1">
+
+      <div class="card">
+        <div class="card-title">Identificación de referencia <span class="rb rb-c">Costos</span></div>
+        <div class="g4">
+          <div class="fg"><label class="fl">Referencia</label>
+            <input type="text" name="referencia" value="{{ v.referencia or '' }}" {{ 'disabled' if rol not in ('costos','admin') }}></div>
+          <div class="fg"><label class="fl">Referencia madre</label>
+            <input type="text" name="ref_madre" value="{{ v.ref_madre or '' }}" {{ 'disabled' if rol not in ('costos','admin') }}></div>
+          <div class="fg"><label class="fl">Nombre producto</label>
+            <input type="text" name="nombre" value="{{ v.nombre or '' }}" {{ 'disabled' if rol not in ('costos','admin') }}></div>
+          <div class="fg"><label class="fl">Unidades</label>
+            <input type="number" name="unidades" value="{{ v.unidades or '' }}" {{ 'disabled' if rol not in ('costos','admin') }}></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Precios de venta <span class="rb rb-m">Mercadeo</span></div>
+        <div class="g4">
+          <div class="fg"><label class="fl">Precio con IVA (COP)</label>
+            <input type="number" name="precio_cop_iva" value="{{ v.precio_cop_iva or '' }}" {{ 'disabled' if rol not in ('mercadeo','admin') }}></div>
+          <div class="fg"><label class="fl">Precio sin IVA</label>
+            <div class="ro">{{ fmt(v.precio_cop_iva / 1.19) if v.precio_cop_iva else '—' }}</div></div>
+          <div class="fg"><label class="fl">Precio USD</label>
+            <input type="number" name="precio_usd" value="{{ v.precio_usd or '' }}" step="0.5" {{ 'disabled' if rol not in ('mercadeo','admin') }}></div>
+          <div class="fg"><label class="fl">Precio prom. neto</label>
+            <div class="ro">{% if metricas %}{{ fmt(metricas.precio_prom_neto) }}{% else %}—{% endif %}</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Costos estimados apertura <span class="rb rb-c">Costos</span></div>
+        <div class="g3">
+          <div class="fg"><label class="fl">Costo estimado producto</label>
+            <input type="number" name="costo_estimado" value="{{ v.costo_estimado or '' }}" {{ 'disabled' if rol not in ('costos','admin') }}></div>
+          <div class="fg"><label class="fl">Costo de la línea</label>
+            <input type="number" name="costo_linea" value="{{ v.costo_linea or '' }}" {{ 'disabled' if rol not in ('costos','admin') }}></div>
+          <div class="fg"><label class="fl">Margen objetivo (%)</label>
+            <input type="number" name="margen_objetivo" value="{{ v.margen_objetivo or 40 }}" min="0" max="100" {{ 'disabled' if rol not in ('finanzas','admin') }}></div>
+        </div>
+      </div>
+
+      {% if rol in ('mercadeo','costos','admin') and not v.fase1_aprobada %}
+      <div class="act-row" style="border:none;padding:0;margin-bottom:1rem">
+        <button type="submit" class="btn-p">Guardar cambios</button>
+      </div>
+      {% endif %}
+    </form>
+    {% endif %}
+
+    <!-- Métricas Fase 1 -->
+    {% if metricas %}
+    <div class="metrics">
+      <div class="metric"><div class="ml">Sin IVA</div><div class="mv">{{ fmt(v.precio_cop_iva / 1.19) }}</div></div>
+      <div class="metric"><div class="ml">Precio prom. neto</div><div class="mv">{{ fmt(metricas.precio_prom_neto) }}</div></div>
+      <div class="metric {{ 'm-ok' if metricas.viable else 'm-bad' }}">
+        <div class="ml">Margen bruto estimado</div>
+        <div class="mv">{{ pct(metricas.margen_bruto_pct) }}</div>
+        <div class="mb-bar"><div class="mb-fill" style="width:{{ [metricas.margen_bruto_pct, 100]|min }}%"></div></div>
+      </div>
+      <div class="metric {{ 'm-ok' if metricas.viable else 'm-bad' }}">
+        <div class="ml">vs. objetivo ({{ v.margen_objetivo or 40 }}%)</div>
+        <div class="mv">{{ '✓ Viable' if metricas.viable else '✗ No viable' }}</div>
+      </div>
+    </div>
+
+    <!-- Tabla canales -->
+    <div class="card">
+      <div class="card-title">Análisis por canal de distribución</div>
+      <table class="tbl">
+        <thead><tr><th>Canal</th><th>Descuento</th><th>Precio neto canal</th><th>Participación</th><th>Margen canal</th></tr></thead>
+        <tbody>
+          {% for c in metricas.canales %}
+          <tr>
+            <td>{{ c.nombre }}</td>
+            <td>{{ c.descuento_pct|int }}%</td>
+            <td>{{ fmt(c.precio_neto) }}</td>
+            <td>{{ c.participacion|int }}%</td>
+            <td style="font-weight:600;color:{{ '#8e0038' if c.margen_pct >= (v.margen_objetivo or 40) else '#c62828' }}">{{ pct(c.margen_pct) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <!-- Aprobación Fase 1 (Finanzas) -->
+    {% if rol in ('finanzas','admin') and not v.fase1_aprobada and not v.cerrada and metricas %}
+    <div class="card">
+      <div class="card-title">Aprobación de Finanzas <span class="rb rb-f">Finanzas</span></div>
+      {% if metricas.viable %}
+        <div class="alert alert-ok" style="margin-bottom:1rem">Margen estimado ({{ pct(metricas.margen_bruto_pct) }}) cumple el objetivo ({{ v.margen_objetivo or 40 }}%). Se puede aprobar la viabilidad inicial.</div>
+      {% else %}
+        <div class="alert alert-warn" style="margin-bottom:1rem">Margen estimado ({{ pct(metricas.margen_bruto_pct) }}) está por debajo del objetivo ({{ v.margen_objetivo or 40 }}%). Se recomienda revisar costos o precio antes de aprobar.</div>
+      {% endif %}
+      <form method="POST" action="{{ url_for('main.aprobar_fase1', vid=vid) }}">
+        <div class="act-row" style="border:none;padding:0">
+          <button type="submit" class="btn-p">Aprobar Fase 1 →</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if v.fase1_aprobada %}
+    <div class="alert alert-ok">✓ Fase 1 aprobada — corrido de materiales habilitado.</div>
+    {% endif %}
+
+  </div><!-- /fase1 -->
+
+  <!-- ══════════════════════
+       FASE 2 — Materiales
+  ══════════════════════ -->
+  {% if v.fase1_aprobada %}
+  <div id="fase2">
+    <div style="height:1px;background:var(--border);margin:1.5rem 0"></div>
+    <h2 style="font-size:16px;font-weight:600;margin-bottom:1rem;color:var(--myd-dark)">Fase 2 — Corrido de materiales</h2>
+
+    {% if not v.cerrada %}
+    <form method="POST" action="{{ url_for('main.guardar', vid=vid) }}">
+      <input type="hidden" name="fase" value="2">
+      <div class="card">
+        <div class="card-title">Costos reales de materiales <span class="rb rb-c">Costos</span></div>
+        <div class="g3">
+          <div class="fg"><label class="fl">Costo real materiales (COP)</label>
+            <input type="number" name="costo_real" value="{{ v.costo_real or '' }}" {{ 'disabled' if rol not in ('costos','admin') or v.fase2_aprobada }}></div>
+          <div class="fg"><label class="fl">Costo estimado apertura</label>
+            <div class="ro">{{ fmt(v.costo_estimado) }}</div></div>
+          <div class="fg"><label class="fl">Variación vs. estimado</label>
+            <div class="ro" style="font-weight:600;color:{{ '#c62828' if variacion and variacion > 0 else '#8e0038' }}">
+              {% if variacion is not none %}{{ ('+' if variacion > 0 else '') }}{{ variacion }}%{% else %}—{% endif %}
+            </div></div>
+        </div>
+        {% if variacion is not none %}
+          {% if variacion > 0 %}
+            <div class="alert alert-warn" style="margin-top:.875rem">El costo real supera el estimado (+{{ variacion }}%). Finanzas debe revisar el margen definitivo.</div>
+          {% else %}
+            <div class="alert alert-ok" style="margin-top:.875rem">Los costos reales están dentro del estimado ({{ variacion }}%). Buen resultado.</div>
+          {% endif %}
+        {% endif %}
+      </div>
+      {% if rol in ('costos','admin') and not v.fase2_aprobada %}
+      <div class="act-row" style="border:none;padding:0;margin-bottom:1rem">
+        <button type="submit" class="btn-s">Guardar materiales</button>
+      </div>
+      {% endif %}
+    </form>
+    {% endif %}
+
+    {% if rol in ('costos','admin') and not v.fase2_aprobada and v.costo_real and not v.cerrada %}
+    <form method="POST" action="{{ url_for('main.aprobar_fase2', vid=vid) }}">
+      <div class="act-row" style="border:none;padding:0;margin-bottom:1rem">
+        <button type="submit" class="btn-p">Enviar a Finanzas →</button>
+      </div>
+    </form>
+    {% endif %}
+
+    {% if v.fase2_aprobada %}
+    <div class="alert alert-ok">✓ Corrido de materiales completado — asignación final habilitada.</div>
+    {% endif %}
+  </div>
+  {% endif %}<!-- /fase2 -->
+
+  <!-- ══════════════════════
+       FASE 3 — Asignación final
+  ══════════════════════ -->
+  {% if v.fase2_aprobada %}
+  <div id="fase3">
+    <div style="height:1px;background:var(--border);margin:1.5rem 0"></div>
+    <h2 style="font-size:16px;font-weight:600;margin-bottom:1rem;color:var(--myd-dark)">Fase 3 — Asignación de precio definitivo</h2>
+
+    {% if not v.cerrada %}
+    <form method="POST" action="{{ url_for('main.guardar', vid=vid) }}">
+      <input type="hidden" name="fase" value="3">
+      <div class="card">
+        <div class="card-title">Precio definitivo <span class="rb rb-f">Finanzas</span></div>
+        <div class="g3">
+          <div class="fg"><label class="fl">Precio final con IVA (COP)</label>
+            <input type="number" name="precio_final_cop" value="{{ v.precio_final_cop or '' }}" {{ 'disabled' if rol not in ('finanzas','admin') }}></div>
+          <div class="fg"><label class="fl">Precio final USD</label>
+            <input type="number" name="precio_final_usd" value="{{ v.precio_final_usd or '' }}" step="0.5" {{ 'disabled' if rol not in ('finanzas','admin') }}></div>
+          <div class="fg"><label class="fl">Precio prom. neto final</label>
+            <div class="ro">{{ fmt(metricas_final.precio_prom_neto) if metricas_final else '—' }}</div></div>
+        </div>
+        <div class="fg" style="margin-top:.875rem"><label class="fl">Notas de Finanzas</label>
+          <textarea name="notas_finanzas" rows="3" style="resize:vertical" {{ 'disabled' if rol not in ('finanzas','admin') }}>{{ v.notas_finanzas or '' }}</textarea>
+        </div>
+      </div>
+      {% if rol in ('finanzas','admin') %}
+      <div class="act-row" style="border:none;padding:0;margin-bottom:1rem">
+        <button type="submit" class="btn-s">Guardar precio</button>
+      </div>
+      {% endif %}
+    </form>
+    {% endif %}
+
+    <!-- Métricas finales -->
+    {% if metricas_final %}
+    <div class="metrics">
+      <div class="metric"><div class="ml">Sin IVA final</div><div class="mv">{{ fmt(v.precio_final_cop / 1.19) }}</div></div>
+      <div class="metric"><div class="ml">Precio prom. neto</div><div class="mv">{{ fmt(metricas_final.precio_prom_neto) }}</div></div>
+      <div class="metric {{ 'm-ok' if metricas_final.viable else 'm-bad' }}">
+        <div class="ml">Margen bruto final</div>
+        <div class="mv">{{ pct(metricas_final.margen_bruto_pct) }}</div>
+        <div class="mb-bar"><div class="mb-fill" style="width:{{ [metricas_final.margen_bruto_pct, 100]|min }}%"></div></div>
+      </div>
+      <div class="metric {{ 'm-ok' if metricas_final.viable else 'm-bad' }}">
+        <div class="ml">vs. objetivo {{ v.margen_objetivo or 40 }}%</div>
+        <div class="mv">{{ '✓ Viable' if metricas_final.viable else '✗ Ajustar' }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Destinatarios + Vista previa + Cerrar -->
+    {% if rol in ('finanzas','admin') and not v.cerrada %}
+    <div class="card">
+      <div class="card-title">Envío de notificación</div>
+
+      {% if destinatarios %}
+      <div style="margin-bottom:.875rem">
+        {% for d in destinatarios %}
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f0f2">
+          <span style="flex:1;font-size:13px">{{ d.email }}</span>
+          <form method="POST" action="{{ url_for('main.quitar_destinatario', vid=vid, did=d.id) }}" style="display:inline">
+            <button type="submit" class="btn-danger">Quitar</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <form method="POST" action="{{ url_for('main.agregar_destinatario', vid=vid) }}" style="display:flex;gap:8px;margin-bottom:1rem">
+        <input type="email" name="email" placeholder="Agregar correo destinatario..." style="flex:1">
+        <button type="submit" class="btn-s">+ Agregar</button>
+      </form>
+
+      {% if v.precio_final_cop %}
+      <div style="font-size:11px;font-weight:600;color:var(--text-sec);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Vista previa del correo</div>
+      <div class="notif-prev">
+        <strong>Para:</strong> {{ destinatarios|map(attribute='email')|join(', ') or '—' }}<br>
+        <strong>Asunto:</strong> Precio definitivo asignado — {{ v.referencia }}{% if v.nombre %} | {{ v.nombre }}{% endif %}<br><br>
+        <strong>REFERENCIA:</strong> {{ v.referencia or '—' }} &nbsp;|&nbsp; <strong>REF. MADRE:</strong> {{ v.ref_madre or '—' }}<br>
+        <strong>PRODUCTO:</strong> {{ v.nombre or '—' }} &nbsp;|&nbsp; <strong>UNIDADES:</strong> {{ v.unidades or '—' }}<br><br>
+        <strong>PRECIO LISTA COP (c/IVA):</strong> {{ fmt(v.precio_final_cop) }}<br>
+        <strong>PRECIO USD:</strong> {% if v.precio_final_usd %}USD {{ v.precio_final_usd }}{% else %}—{% endif %}<br>
+        <strong>PRECIO SIN IVA:</strong> {{ fmt(v.precio_final_cop / 1.19) }}<br>
+        {% if metricas_final %}<strong>PRECIO PROM. NETO:</strong> {{ fmt(metricas_final.precio_prom_neto) }}<br>{% endif %}<br>
+        <strong>COSTO CIERRE:</strong> {{ fmt(v.costo_real or v.costo_estimado) }}<br>
+        {% if metricas_final %}<strong>MARGEN BRUTO FINAL:</strong> {{ pct(metricas_final.margen_bruto_pct) }}<br>{% endif %}
+        {% if v.notas_finanzas %}<br><strong>NOTAS FINANZAS:</strong> {{ v.notas_finanzas }}<br>{% endif %}<br>
+        Equipo M&amp;D — Viabilidad de Precios
+      </div>
+
+      <form method="POST" action="{{ url_for('main.cerrar', vid=vid) }}">
+        <div class="act-row" style="border:none;padding:0;margin-top:.875rem">
+          <button type="submit" class="btn-p">Enviar y cerrar viabilidad</button>
+        </div>
+      </form>
+      {% else %}
+      <div class="alert alert-warn">Ingresa el precio final COP antes de poder cerrar la viabilidad.</div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if v.cerrada %}
+    <div class="alert alert-ok" style="font-size:15px">
+      ✓ Viabilidad cerrada. Precio definitivo: <strong>{{ fmt(v.precio_final_cop) }}</strong>
+      {% if v.precio_final_usd %} / USD {{ v.precio_final_usd }}{% endif %}
+    </div>
+    {% endif %}
+
+  </div>
+  {% endif %}<!-- /fase3 -->
+
+  <!-- Historial -->
+  {% if historial %}
+  <div class="card" style="margin-top:1.5rem">
+    <div class="card-title">Historial de cambios</div>
+    {% for h in historial %}
+    <div class="hist-item">
+      <div class="hist-dot"></div>
+      <div class="hist-text">
+        <span class="hist-user">{{ h.usuario }}</span> — {{ h.accion|replace('_',' ') }}
+        <span class="hist-time">&nbsp;{{ h.creado_at[:16] if h.creado_at else '' }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

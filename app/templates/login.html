@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="https://fajasmyd.com/cdn/shop/files/LOGO_M_D-03.png?v=1757106759&width=220"
+           alt="M&D" onerror="this.style.display='none'">
+    </div>
+    <h1 class="login-title">Viabilidad de Precios</h1>
+    <p class="login-sub">Ingresa con tu usuario y contraseña</p>
+
+    {% if error %}
+    <div class="flash error" style="margin-bottom:1rem">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('main.login') }}">
+      <div class="fg" style="margin-bottom:.875rem">
+        <label class="fl">Usuario</label>
+        <select name="usuario">
+          <option value="">Selecciona un rol...</option>
+          <option value="mercadeo">Mercadeo</option>
+          <option value="costos">Costos</option>
+          <option value="finanzas">Finanzas</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="fg" style="margin-bottom:1.25rem">
+        <label class="fl">Contraseña</label>
+        <input type="password" name="password" placeholder="Contraseña" autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn-p" style="width:100%">Ingresar</button>
+    </form>
+
+    <p style="margin-top:1.25rem;font-size:11px;color:#b0a0b0;text-align:center">
+      Demo: usuario = mercadeo / costos / finanzas / admin &nbsp;|&nbsp; clave = myd123
+    </p>
+  </div>
+</div>
+{% endblock %}

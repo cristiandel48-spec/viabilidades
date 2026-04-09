@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — M&D Viabilidad{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-sub">Bienvenido, {{ nombre }} &nbsp;·&nbsp; Rol: <strong>{{ rol }}</strong></p>
+  </div>
+
+  <!-- Métricas resumen -->
+  <div class="metrics">
+    <div class="metric">
+      <div class="ml">Total viabilidades</div>
+      <div class="mv">{{ total }}</div>
+    </div>
+    <div class="metric">
+      <div class="ml">En proceso</div>
+      <div class="mv" style="color:#0d47a1">{{ en_proceso }}</div>
+    </div>
+    <div class="metric m-ok">
+      <div class="ml">Cerradas</div>
+      <div class="mv">{{ cerradas }}</div>
+    </div>
+    <div class="metric">
+      <div class="ml">Fase 1 aprobadas</div>
+      <div class="mv" style="color:#6a1b9a">{{ viables }}</div>
+    </div>
+  </div>
+
+  <!-- Tabla de viabilidades -->
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between">
+      <span>Viabilidades de precio</span>
+      <a href="{{ url_for('main.nueva') }}" class="btn-p btn-sm">+ Nueva viabilidad</a>
+    </div>
+
+    {% if viabilidades %}
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Referencia</th>
+            <th>Nombre</th>
+            <th>Precio lista COP</th>
+            <th>Costo estimado</th>
+            <th>Fase</th>
+            <th>Estado</th>
+            <th>Creada</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in viabilidades %}
+          <tr>
+            <td><strong>{{ v.referencia or '—' }}</strong></td>
+            <td>{{ v.nombre or '—' }}</td>
+            <td>{% if v.precio_cop_iva %}${{ '{:,.0f}'.format(v.precio_cop_iva).replace(',', '.') }}{% else %}—{% endif %}</td>
+            <td>{% if v.costo_estimado %}${{ '{:,.0f}'.format(v.costo_estimado).replace(',', '.') }}{% else %}—{% endif %}</td>
+            <td>{{ v.fase or 1 }}</td>
+            <td>
+              {% if v.cerrada %}
+                <span class="status s-closed">Cerrada</span>
+              {% elif v.fase2_aprobada %}
+                <span class="status s-f2">Fase 3</span>
+              {% elif v.fase1_aprobada %}
+                <span class="status s-f1">Fase 2</span>
+              {% else %}
+                <span class="status s-open">Fase 1</span>
+              {% endif %}
+            </td>
+            <td style="color:#b0a0b0;font-size:12px">{{ v.creado_at[:10] if v.creado_at else '—' }}</td>
+            <td><a href="{{ url_for('main.detalle', vid=v.id) }}" class="btn-s btn-sm">Ver</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:2.5rem;color:#b0a0b0">
+      <p style="font-size:15px;margin-bottom:.75rem">No hay viabilidades aún</p>
+      <a href="{{ url_for('main.nueva') }}" class="btn-p">Crear la primera</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Destinatarios globales — M&D{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Destinatarios globales</h1>
+    <p class="page-sub">Estas personas recibirán notificaciones en todas las viabilidades nuevas.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Agregar destinatario</div>
+    <form method="POST" action="{{ url_for('main.admin_destinatarios') }}">
+      <div class="g3">
+        <div class="fg"><label class="fl">Email *</label><input type="email" name="email" required placeholder="correo@empresa.com"></div>
+        <div class="fg"><label class="fl">Nombre</label><input type="text" name="nombre" placeholder="Ej: María García"></div>
+        <div class="fg"><label class="fl">Rol</label>
+          <select name="rol">
+            <option value="">Sin rol</option>
+            <option value="mercadeo">Mercadeo</option>
+            <option value="costos">Costos</option>
+            <option value="finanzas">Finanzas</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="act-row" style="border:none;padding:0;margin-top:.875rem">
+        <button type="submit" class="btn-p">Agregar</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Lista de destinatarios</div>
+    {% if destinatarios %}
+    <table class="tbl">
+      <thead><tr><th>Email</th><th>Nombre</th><th>Rol</th><th>Activo</th><th></th></tr></thead>
+      <tbody>
+        {% for d in destinatarios %}
+        <tr>
+          <td>{{ d.email }}</td>
+          <td>{{ d.nombre or '—' }}</td>
+          <td>{% if d.rol %}<span class="rb {{ 'rb-m' if d.rol == 'mercadeo' else 'rb-c' if d.rol == 'costos' else 'rb-f' if d.rol == 'finanzas' else 'rb-a' }}">{{ d.rol }}</span>{% else %}—{% endif %}</td>
+          <td><span style="color:{{ '#2e7d32' if d.activo else '#b0a0b0' }}">{{ '✓ Sí' if d.activo else '✗ No' }}</span></td>
+          <td>
+            <form method="POST" action="{{ url_for('main.toggle_destinatario_global', did=d.id) }}" style="display:inline">
+              <button type="submit" class="btn-s btn-sm">{{ 'Desactivar' if d.activo else 'Activar' }}</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:#b0a0b0;font-size:13px;padding:.5rem 0">No hay destinatarios configurados aún.</p>
+    {% endif %}
+  </div>
+
+  <a href="{{ url_for('main.dashboard') }}" class="btn-s">← Volver al dashboard</a>
+</div>
+{% endblock %}

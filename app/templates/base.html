@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}M&D — Viabilidad de Precios{% endblock %}</title>
+<style>
+:root {
+  --myd: #c2185b;
+  --myd-dark: #8e0038;
+  --myd-light: #fce4ec;
+  --myd-border: #f48fb1;
+  --bg: #f8f4f6;
+  --white: #fff;
+  --text: #1a1118;
+  --text-sec: #7a5a6a;
+  --border: #ede0e8;
+  --green: #2e7d32;
+  --green-bg: #e8f5e9;
+  --amber: #e65100;
+  --amber-bg: #fff3e0;
+  --red: #c62828;
+  --red-bg: #ffebee;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--myd);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(194,24,91,.3)}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand-logo{height:32px;object-fit:contain}
+.brand-fallback{color:#fff;font-weight:700;font-size:20px;letter-spacing:.05em}
+.brand-sep{width:1px;height:22px;background:rgba(255,255,255,.35)}
+.brand-label{font-size:13px;font-weight:500;color:rgba(255,255,255,.9)}
+.topbar-nav{display:flex;align-items:center;gap:8px}
+.topbar-nav a{color:rgba(255,255,255,.8);text-decoration:none;font-size:13px;padding:5px 12px;border-radius:6px;transition:background .15s}
+.topbar-nav a:hover{background:rgba(255,255,255,.15);color:#fff}
+.topbar-nav a.active{background:rgba(255,255,255,.2);color:#fff;font-weight:500}
+.user-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border-radius:100px;padding:4px 12px 4px 8px}
+.user-dot{width:24px;height:24px;border-radius:50%;background:#fff;color:var(--myd);font-weight:700;font-size:11px;display:flex;align-items:center;justify-content:center}
+.user-name{font-size:12px;color:#fff;font-weight:500}
+
+/* ── LAYOUT ── */
+.container{max-width:1100px;margin:0 auto;padding:1.5rem}
+.page-header{margin-bottom:1.5rem}
+.page-title{font-size:22px;font-weight:600;color:var(--text);margin-bottom:4px}
+.page-sub{font-size:14px;color:var(--text-sec)}
+
+/* ── FLASH ── */
+.flash{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;margin-bottom:1rem}
+.flash.ok{background:var(--myd-light);color:var(--myd-dark);border:1px solid var(--myd-border)}
+.flash.error{background:var(--red-bg);color:var(--red);border:1px solid #ef9a9a}
+
+/* ── CARDS ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.rb{font-size:11px;padding:2px 8px;border-radius:100px;font-weight:500}
+.rb-m{background:var(--myd-light);color:var(--myd-dark)}
+.rb-c{background:#e3f2fd;color:#0d47a1}
+.rb-f{background:var(--amber-bg);color:var(--amber)}
+.rb-a{background:#f3e5f5;color:#6a1b9a}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:768px){.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+
+/* ── FORM ── */
+.fg{display:flex;flex-direction:column;gap:5px}
+.fl{font-size:11px;font-weight:600;color:var(--text-sec);text-transform:uppercase;letter-spacing:.05em}
+input[type=text],input[type=number],input[type=email],input[type=password],select,textarea{
+  width:100%;padding:8px 10px;font-size:13px;border:1px solid #ddd0d8;border-radius:6px;
+  background:var(--white);color:var(--text);font-family:inherit;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--myd);box-shadow:0 0 0 3px rgba(194,24,91,.1)}
+input:disabled,select:disabled,textarea:disabled{background:#f8f4f6;color:#9e9099;cursor:not-allowed}
+.ro{font-size:13px;padding:8px 10px;background:#f8f4f6;border-radius:6px;color:var(--text);border:1px solid var(--border);min-height:36px}
+
+/* ── BUTTONS ── */
+.btn-p{padding:9px 22px;background:var(--myd);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit;text-decoration:none;display:inline-block}
+.btn-p:hover{background:var(--myd-dark)}
+.btn-p:disabled{opacity:.4;cursor:not-allowed}
+.btn-s{padding:9px 22px;background:var(--white);color:var(--text);border:1px solid #ddd0d8;border-radius:8px;font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit;text-decoration:none;display:inline-block}
+.btn-s:hover{background:#f8f4f6}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
+.btn-danger{background:#ffebee;color:var(--red);border:1px solid #ef9a9a;padding:5px 12px;font-size:12px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-danger:hover{background:var(--red);color:#fff}
+.act-row{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
+
+/* ── METRICS ── */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem}
+@media(max-width:768px){.metrics{grid-template-columns:1fr 1fr}}
+.metric{background:#f8f4f6;border-radius:8px;padding:.875rem}
+.metric .ml{font-size:12px;color:var(--text-sec);margin-bottom:4px}
+.metric .mv{font-size:20px;font-weight:600;color:var(--text)}
+.metric.m-ok .mv{color:var(--myd-dark)}
+.metric.m-bad .mv{color:var(--red)}
+.metric.m-warn .mv{color:var(--amber)}
+.mb-bar{height:6px;border-radius:3px;background:var(--border);margin-top:6px;overflow:hidden}
+.mb-fill{height:100%;border-radius:3px;background:var(--myd)}
+
+/* ── ALERTS ── */
+.alert{padding:.75rem 1rem;border-radius:8px;font-size:13px;margin-bottom:.875rem}
+.alert-ok{background:var(--myd-light);border:1px solid var(--myd-border);color:var(--myd-dark)}
+.alert-warn{background:var(--amber-bg);border:1px solid #ffcc80;color:var(--amber)}
+.alert-bad{background:var(--red-bg);border:1px solid #ef9a9a;color:var(--red)}
+
+/* ── TABLE ── */
+.tbl{width:100%;font-size:13px;border-collapse:collapse}
+.tbl th{text-align:left;font-size:11px;font-weight:600;color:var(--text-sec);text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-bottom:1px solid var(--border)}
+.tbl td{padding:8px 10px;border-bottom:1px solid #f5f0f2;color:var(--text)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr:hover td{background:var(--myd-light)}
+
+/* ── STATUS BADGE ── */
+.status{display:inline-block;font-size:11px;padding:2px 8px;border-radius:100px;font-weight:600}
+.s-open{background:#e3f2fd;color:#0d47a1}
+.s-f1{background:var(--amber-bg);color:var(--amber)}
+.s-f2{background:#f3e5f5;color:#6a1b9a}
+.s-closed{background:var(--green-bg);color:var(--green)}
+
+/* ── NOTIF PREVIEW ── */
+.notif-prev{background:#f8f4f6;border:1px solid var(--border);border-radius:8px;padding:1rem;font-size:13px;color:#5a4a54;line-height:1.8;font-family:'Courier New',monospace}
+.notif-prev strong{color:var(--text);font-family:inherit}
+
+/* ── PHASE BAR ── */
+.phase-bar{display:flex;align-items:center;background:var(--white);border-bottom:1px solid var(--border);padding:.75rem 1.5rem;gap:4px}
+.ph{display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;text-decoration:none}
+.ph:hover{background:var(--myd-light)}
+.ph-n{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;background:#f0e0e8;color:var(--myd-dark);flex-shrink:0}
+.ph-l{font-size:13px;color:var(--text-sec)}
+.ph.active .ph-n{background:var(--myd);color:#fff}
+.ph.active .ph-l{color:var(--text);font-weight:500}
+.ph.done .ph-n{background:var(--myd-light);color:var(--myd-dark)}
+.ph.done .ph-l{color:var(--myd)}
+.ph.locked{opacity:.4;pointer-events:none}
+.ph-sep{color:#c9a0b4;font-size:16px;user-select:none}
+
+/* ── LOGIN ── */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--myd)}
+.login-card{background:var(--white);border-radius:16px;padding:2.5rem 2rem;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(194,24,91,.2)}
+.login-logo{text-align:center;margin-bottom:1.5rem}
+.login-logo img{height:44px;object-fit:contain}
+.login-title{font-size:20px;font-weight:600;color:var(--text);text-align:center;margin-bottom:.25rem}
+.login-sub{font-size:13px;color:var(--text-sec);text-align:center;margin-bottom:1.5rem}
+
+/* ── HISTORIAL ── */
+.hist-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f5f0f2;font-size:12px}
+.hist-item:last-child{border-bottom:none}
+.hist-dot{width:8px;height:8px;border-radius:50%;background:var(--myd);flex-shrink:0;margin-top:4px}
+.hist-text{color:var(--text-sec);flex:1}
+.hist-user{font-weight:500;color:var(--text)}
+.hist-time{color:#b0a0b0;font-size:11px}
+</style>
+</head>
+<body>
+
+{% if session.usuario %}
+<div class="topbar">
+  <a class="brand" href="{{ url_for('main.dashboard') }}">
+    <img class="brand-logo"
+      src="https://fajasmyd.com/cdn/shop/files/LOGO_M_D-03.png?v=1757106759&width=220"
+      alt="M&D"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <span class="brand-fallback" style="display:none">M&amp;D</span>
+    <div class="brand-sep"></div>
+    <span class="brand-label">Viabilidad de Precios</span>
+  </a>
+  <div class="topbar-nav">
+    <a href="{{ url_for('main.dashboard') }}" class="{{ 'active' if request.endpoint == 'main.dashboard' }}">Dashboard</a>
+    <a href="{{ url_for('main.nueva') }}">+ Nueva</a>
+    {% if session.usuario == 'admin' %}
+    <a href="{{ url_for('main.admin_destinatarios') }}">Destinatarios</a>
+    {% endif %}
+    <div class="user-pill">
+      <div class="user-dot">{{ session.usuario[0].upper() }}</div>
+      <span class="user-name">{{ session.usuario | capitalize }}</span>
+    </div>
+    <a href="{{ url_for('main.logout') }}" style="opacity:.7">Salir</a>
+  </div>
+</div>
+{% endif %}
+
+{% with msgs = get_flashed_messages(with_categories=True) %}
+  {% if msgs %}
+    <div style="max-width:1100px;margin:.75rem auto 0;padding:0 1.5rem">
+      {% for cat, msg in msgs %}
+        <div class="flash {{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+
+</body>
+</html>

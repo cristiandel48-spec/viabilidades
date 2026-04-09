@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Nueva Viabilidad — M&D{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Nueva viabilidad de precio</h1>
+    <p class="page-sub">Ingresa los datos iniciales. Cada área completará su parte.</p>
+  </div>
+
+  <form method="POST" action="{{ url_for('main.nueva') }}">
+    <!-- Identificación (Costos) -->
+    <div class="card">
+      <div class="card-title">Identificación de referencia <span class="rb rb-c">Costos</span></div>
+      <div class="g4">
+        <div class="fg">
+          <label class="fl">Referencia *</label>
+          <input type="text" name="referencia" value="{{ v.get('referencia','') }}" required placeholder="Ej: B-06006" {{ 'disabled' if rol not in ('costos','admin') }}>
+        </div>
+        <div class="fg">
+          <label class="fl">Referencia madre</label>
+          <input type="text" name="ref_madre" value="{{ v.get('ref_madre','') }}" placeholder="Ej: B-00006" {{ 'disabled' if rol not in ('costos','admin') }}>
+        </div>
+        <div class="fg">
+          <label class="fl">Nombre del producto</label>
+          <input type="text" name="nombre" value="{{ v.get('nombre','') }}" placeholder="Ej: Faja corta reloj de arena" {{ 'disabled' if rol not in ('costos','admin') }}>
+        </div>
+        <div class="fg">
+          <label class="fl">Unidades</label>
+          <input type="number" name="unidades" value="{{ v.get('unidades','') }}" min="0" placeholder="Ej: 450" {{ 'disabled' if rol not in ('costos','admin') }}>
+        </div>
+      </div>
+    </div>
+
+    <!-- Precios (Mercadeo) -->
+    <div class="card">
+      <div class="card-title">Precios de venta <span class="rb rb-m">Mercadeo</span></div>
+      <div class="g3">
+        <div class="fg">
+          <label class="fl">Precio con IVA (COP)</label>
+          <input type="number" name="precio_cop_iva" value="{{ v.get('precio_cop_iva','') }}" min="0" placeholder="Ej: 179900" {{ 'disabled' if rol not in ('mercadeo','admin') }}>
+        </div>
+        <div class="fg">
+          <label class="fl">Precio USD</label>
+          <input type="number" name="precio_usd" value="{{ v.get('precio_usd','') }}" min="0" step="0.5" placeholder="Ej: 41" {{ 'disabled' if rol not in ('mercadeo','admin') }}>
+        </div>
+        <div class="fg">
+          <label class="fl">Margen objetivo (%)</label>
+          <input type="number" name="margen_objetivo" value="{{ v.get('margen_objetivo', 40) }}" min="0" max="100" {{ 'disabled' if rol not in ('finanzas','admin') }}>
+        </div>
+      </div>
+    </div>
+
+    <!-- Costos (Costos) -->
+    <div class="card">
+      <div class="card-title">Costos estimados de apertura <span class="rb rb-c">Costos</span></div>
+      <div class="g2">
+        <div class="fg">
+          <label class="fl">Costo estimado producto (COP)</label>
+          <input type="number" name="costo_estimado" value="{{ v.get('costo_estimado','') }}" min="0" placeholder="Ej: 77497" {{ 'disabled' if rol not in ('costos','admin') }}>
+        </div>
+        <div class="fg">
+          <label class="fl">Costo de la línea (COP)</label>
+          <input type="number" name="costo_linea" value="{{ v.get('costo_linea','') }}" min="0" placeholder="Ej: 5000" {{ 'disabled' if rol not in ('costos','admin') }}>
+        </div>
+      </div>
+    </div>
+
+    <div class="act-row" style="border:none;padding:0">
+      <a href="{{ url_for('main.dashboard') }}" class="btn-s">Cancelar</a>
+      <button type="submit" class="btn-p">Crear viabilidad →</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
