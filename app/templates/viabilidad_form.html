@@ -4,71 +4,185 @@
 <div class="container">
   <div class="page-header">
     <h1 class="page-title">Nueva viabilidad de precio</h1>
-    <p class="page-sub">Ingresa los datos iniciales. Cada área completará su parte.</p>
+    <p class="page-sub">Selecciona la línea y completa los datos de cada área.</p>
   </div>
 
-  <form method="POST" action="{{ url_for('main.nueva') }}">
-    <!-- Identificación (Costos) -->
+  <form method="POST" action="{{ url_for('main.nueva') }}" id="frmNueva">
+
+    <!-- PASO 1: Selector de línea -->
     <div class="card">
-      <div class="card-title">Identificación de referencia <span class="rb rb-c">Costos</span></div>
-      <div class="g4">
-        <div class="fg">
-          <label class="fl">Referencia *</label>
-          <input type="text" name="referencia" value="{{ v.get('referencia','') }}" required placeholder="Ej: B-06006" {{ 'disabled' if rol not in ('costos','admin') }}>
-        </div>
-        <div class="fg">
-          <label class="fl">Referencia madre</label>
-          <input type="text" name="ref_madre" value="{{ v.get('ref_madre','') }}" placeholder="Ej: B-00006" {{ 'disabled' if rol not in ('costos','admin') }}>
-        </div>
-        <div class="fg">
-          <label class="fl">Nombre del producto</label>
-          <input type="text" name="nombre" value="{{ v.get('nombre','') }}" placeholder="Ej: Faja corta reloj de arena" {{ 'disabled' if rol not in ('costos','admin') }}>
-        </div>
-        <div class="fg">
-          <label class="fl">Unidades</label>
-          <input type="number" name="unidades" value="{{ v.get('unidades','') }}" min="0" placeholder="Ej: 450" {{ 'disabled' if rol not in ('costos','admin') }}>
-        </div>
+      <div class="card-title">Paso 1 — Selecciona la línea <span class="rb rb-f">Finanzas</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:1rem">
+        {% set iconos = {
+          'Línea Invisible': '👙',
+          'Fajas': '🩱',
+          'Control Flexy®': '💪',
+          'Reloj de Arena®': '⏳',
+          'Lovely': '💕',
+          'Materna': '🤰',
+          'Deportiva': '🏃',
+          'Para Hombres': '👔',
+          'Complementaria': '📦'
+        } %}
+        {% for l in lineas %}
+        <button type="button"
+          onclick="selLinea('{{ l }}')"
+          data-linea="{{ l }}"
+          style="padding:.875rem 1rem;background:{{ '#c2185b' if linea_sel==l else '#fff' }};
+                 border:2px solid {{ '#c2185b' if linea_sel==l else '#ede0e8' }};
+                 border-radius:12px;cursor:pointer;font-family:inherit;font-size:13px;
+                 font-weight:500;color:{{ '#fff' if linea_sel==l else '#1a1118' }};
+                 text-align:center;transition:all .2s;line-height:1.5">
+          <span style="font-size:22px;display:block;margin-bottom:4px">{{ iconos.get(l, '📦') }}</span>
+          {{ l }}
+        </button>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="linea" id="lineaInput" value="{{ linea_sel or '' }}">
+      <div id="lineaSelLabel" style="font-size:13px;color:#8e0038;font-weight:500;{{ 'display:none' if not linea_sel else '' }}">
+        ✓ Línea seleccionada: <span id="lineaNombre">{{ linea_sel or '' }}</span>
       </div>
     </div>
 
-    <!-- Precios (Mercadeo) -->
-    <div class="card">
-      <div class="card-title">Precios de venta <span class="rb rb-m">Mercadeo</span></div>
-      <div class="g3">
-        <div class="fg">
-          <label class="fl">Precio con IVA (COP)</label>
-          <input type="number" name="precio_cop_iva" value="{{ v.get('precio_cop_iva','') }}" min="0" placeholder="Ej: 179900" {{ 'disabled' if rol not in ('mercadeo','admin') }}>
-        </div>
-        <div class="fg">
-          <label class="fl">Precio USD</label>
-          <input type="number" name="precio_usd" value="{{ v.get('precio_usd','') }}" min="0" step="0.5" placeholder="Ej: 41" {{ 'disabled' if rol not in ('mercadeo','admin') }}>
-        </div>
-        <div class="fg">
-          <label class="fl">Margen objetivo (%)</label>
-          <input type="number" name="margen_objetivo" value="{{ v.get('margen_objetivo', 40) }}" min="0" max="100" {{ 'disabled' if rol not in ('finanzas','admin') }}>
+    <!-- PASOS 2-4: solo visibles al seleccionar línea -->
+    <div id="datosForm" style="{{ 'display:none' if not linea_sel else '' }}">
+
+      <!-- Paso 2: Referencia — Finanzas -->
+      <div class="card">
+        <div class="card-title">Paso 2 — Identificación de referencia <span class="rb rb-f">Finanzas</span></div>
+        <div class="g4">
+          <div class="fg">
+            <label class="fl">Referencia *</label>
+            <input type="text" name="referencia" required placeholder="Ej: B-06006"
+              {{ 'disabled' if rol not in ('finanzas','admin') }}>
+          </div>
+          <div class="fg">
+            <label class="fl">Referencia homóloga</label>
+            <input type="text" name="ref_homologa" placeholder="Ej: B-00006"
+              {{ 'disabled' if rol not in ('finanzas','admin') }}>
+          </div>
+          <div class="fg">
+            <label class="fl">Nombre producto</label>
+            <input type="text" name="nombre" placeholder="Ej: Faja corta reloj de arena"
+              {{ 'disabled' if rol not in ('finanzas','admin') }}>
+          </div>
+          <div class="fg">
+            <label class="fl">Unidades</label>
+            <input type="number" name="unidades" min="0" placeholder="Ej: 450"
+              {{ 'disabled' if rol not in ('mercadeo','finanzas','admin') }}>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Costos (Costos) -->
-    <div class="card">
-      <div class="card-title">Costos estimados de apertura <span class="rb rb-c">Costos</span></div>
-      <div class="g2">
-        <div class="fg">
-          <label class="fl">Costo estimado producto (COP)</label>
-          <input type="number" name="costo_estimado" value="{{ v.get('costo_estimado','') }}" min="0" placeholder="Ej: 77497" {{ 'disabled' if rol not in ('costos','admin') }}>
+      <!-- Paso 3: Precios y canales — Mercadeo -->
+      <div class="card">
+        <div class="card-title">Paso 3 — Precios y participación por canal <span class="rb rb-m">Mercadeo</span></div>
+        <div class="g4" style="margin-bottom:1rem">
+          <div class="fg">
+            <label class="fl">Precio con IVA (COP)</label>
+            <input type="number" name="precio_cop_iva" min="0" placeholder="Ej: 179900"
+              {{ 'disabled' if rol not in ('mercadeo','admin') }}>
+          </div>
+          <div class="fg">
+            <label class="fl">Precio USD</label>
+            <input type="number" name="precio_usd" min="0" step="0.5" placeholder="Ej: 41"
+              {{ 'disabled' if rol not in ('mercadeo','admin') }}>
+          </div>
+          <div class="fg">
+            <label class="fl">Tasa de cambio (COP/USD)</label>
+            <input type="number" name="tasa_usd" min="0" placeholder="Ej: 4200"
+              {{ 'disabled' if rol not in ('mercadeo','admin') }}>
+          </div>
+          <div class="fg">
+            <label class="fl">Margen objetivo (%)</label>
+            <input type="number" name="margen_objetivo" value="40" min="0" max="100"
+              {{ 'disabled' if rol not in ('finanzas','admin') }}>
+          </div>
         </div>
-        <div class="fg">
-          <label class="fl">Costo de la línea (COP)</label>
-          <input type="number" name="costo_linea" value="{{ v.get('costo_linea','') }}" min="0" placeholder="Ej: 5000" {{ 'disabled' if rol not in ('costos','admin') }}>
+
+        <div style="font-size:11px;font-weight:600;color:#7a5a6a;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">
+          Participación por canal — debe sumar 100% <span class="rb rb-m">Mercadeo</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+          <div class="fg">
+            <label class="fl">Aliados %</label>
+            <input type="number" name="dist_aliados" value="40" min="0" max="100" step="1"
+              oninput="checkDist()" {{ 'disabled' if rol not in ('mercadeo','admin') }}>
+          </div>
+          <div class="fg">
+            <label class="fl">Int + Vinculados %</label>
+            <input type="number" name="dist_vinculados" value="25" min="0" max="100" step="1"
+              oninput="checkDist()" {{ 'disabled' if rol not in ('mercadeo','admin') }}>
+          </div>
+          <div class="fg">
+            <label class="fl">Tiendas %</label>
+            <input type="number" name="dist_tiendas" value="25" min="0" max="100" step="1"
+              oninput="checkDist()" {{ 'disabled' if rol not in ('mercadeo','admin') }}>
+          </div>
+          <div class="fg">
+            <label class="fl">E-Commerce %</label>
+            <input type="number" name="dist_ecommerce" value="10" min="0" max="100" step="1"
+              oninput="checkDist()" {{ 'disabled' if rol not in ('mercadeo','admin') }}>
+          </div>
+        </div>
+        <div id="distTotal" style="font-size:12px;font-weight:600;color:#1b5e20;margin-top:6px">Total: 100%</div>
+      </div>
+
+      <!-- Paso 4: Costos — Costos -->
+      <div class="card">
+        <div class="card-title">Paso 4 — Costos <span class="rb rb-c">Costos</span></div>
+        <div class="g2">
+          <div class="fg">
+            <label class="fl">Costo inicial estimado (COP)</label>
+            <input type="number" name="costo_estimado" min="0" placeholder="Ej: 77497"
+              {{ 'disabled' if rol not in ('costos','admin') }}>
+          </div>
+          <div class="fg">
+            <label class="fl">Costo final / cierre (COP)</label>
+            <input type="number" name="costo_linea" min="0" placeholder="Se completa al cierre"
+              {{ 'disabled' if rol not in ('costos','admin') }}>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="act-row" style="border:none;padding:0">
-      <a href="{{ url_for('main.dashboard') }}" class="btn-s">Cancelar</a>
-      <button type="submit" class="btn-p">Crear viabilidad →</button>
-    </div>
+      <div class="act-row" style="border:none;padding:0">
+        <a href="{{ url_for('main.dashboard') }}" class="btn-s">Cancelar</a>
+        <button type="submit" class="btn-p" id="btnCrear">Crear viabilidad →</button>
+      </div>
+
+    </div><!-- /datosForm -->
   </form>
 </div>
+
+<script>
+function selLinea(nombre) {
+  document.querySelectorAll('[data-linea]').forEach(function(b) {
+    b.style.background = '#fff';
+    b.style.borderColor = '#ede0e8';
+    b.style.color = '#1a1118';
+  });
+  var btn = document.querySelector('[data-linea="' + nombre + '"]');
+  btn.style.background = '#c2185b';
+  btn.style.borderColor = '#c2185b';
+  btn.style.color = '#fff';
+  document.getElementById('lineaInput').value = nombre;
+  document.getElementById('lineaNombre').textContent = nombre;
+  document.getElementById('lineaSelLabel').style.display = 'block';
+  document.getElementById('datosForm').style.display = 'block';
+}
+
+function checkDist() {
+  var campos = ['dist_aliados', 'dist_vinculados', 'dist_tiendas', 'dist_ecommerce'];
+  var total = campos.reduce(function(s, n) {
+    return s + (parseFloat(document.querySelector('[name=' + n + ']').value) || 0);
+  }, 0);
+  var el = document.getElementById('distTotal');
+  el.textContent = 'Total: ' + total.toFixed(0) + '%';
+  el.style.color = Math.abs(total - 100) < 0.1 ? '#1b5e20' : '#c62828';
+}
+
+{% if linea_sel %}
+window.onload = function() { selLinea('{{ linea_sel }}'); };
+{% endif %}
+</script>
 {% endblock %}
