@@ -238,7 +238,7 @@ def nueva():
         return redirect(url_for("main.detalle", vid=vid))
 
     linea_sel = request.args.get("linea", "")
-    return render_template("viabilidad_form.html", rol=rol, lineas=LINEAS, linea_sel=linea_sel)
+    return render_template("viabilidad_form.html", rol=rol, lineas=LINEAS, linea_sel=linea_sel, v={})
 
 
 # ═══════════════════════════════════════════════════════════
